@@ -1,6 +1,6 @@
 function gvNormalizeUsername(input) {
   return input
-                .gvNormalizeUsername("NFD")
+                .normalize("NFD")
                 .replace(/\p{Diacritic}/gu, "")
                 .toLowerCase()
                 .replace(/[^a-z0-9]/g, "");
@@ -16,6 +16,7 @@ const  usernameInput = document.getElementById("username");
             
 const gvRegisterUpdateUsername = () => {
   usernameInput.value =gvComputeUsername(firstNameInput.value, lastNameInput.value);
+  return true;
 };
 
 firstNameInput.addEventListener("input",gvRegisterUpdateUsername);
