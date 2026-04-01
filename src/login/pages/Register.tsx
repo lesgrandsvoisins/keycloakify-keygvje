@@ -9,11 +9,23 @@ import type { PageProps } from "keycloakify/login/pages/PageProps";
 import type { KcContext } from "../KcContext";
 import type { I18n } from "../i18n";
 
+import "../../gv/gv.css";
 
 type RegisterProps = PageProps<Extract<KcContext, { pageId: "register.ftl" }>, I18n> & {
   UserProfileFormFields: LazyOrNot<(props: UserProfileFormFieldsProps) => JSX.Element>;
   doMakeUserConfirmPassword: boolean;
 };
+
+const normalize = (input: string) =>
+  input
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "");
+
+const computeUsername = (first?: string, last?: string) =>
+(normalize(last ?? "").slice(0, 4) +
+  normalize(first ?? "").slice(0, 4));
 
 export default function Register(props: RegisterProps) {
   const { kcContext, i18n, doUseDefaultCss, Template, classes, UserProfileFormFields, doMakeUserConfirmPassword } = props;
@@ -41,6 +53,78 @@ export default function Register(props: RegisterProps) {
       delete (window as any)["onSubmitRecaptcha"];
     };
   }, []);
+
+  useLayoutEffect(() => {
+
+    // let usernameTouched = false;
+
+    const setup = () => {
+      const first = document.querySelector<HTMLInputElement>('input[name="firstName"]');
+      const last = document.querySelector<HTMLInputElement>('input[name="lastName"]');
+      const username = document.querySelector<HTMLInputElement>('input[name="username"]');
+
+      if (!first || !last || !username) return false;
+
+      // detect manual edits
+      // username.addEventListener("input", () => {
+      //   if (username.value !== "") {
+      //     usernameTouched = true;
+      //   } else {
+      //     usernameTouched = false; // allow reset
+      //   }
+      // });
+
+      const updateUsername = () => {
+        // if (usernameTouched) return;
+
+        const generated = computeUsername(first.value, last.value);
+
+        // first.classList.add("GV");
+        // last.classList.add("GV");
+        // username.classList.add("GV");
+
+        if (generated) {
+          username.value = generated;
+
+          // notify Keycloak form system
+          username.dispatchEvent(new Event("input", { bubbles: true }));
+          username.dispatchEvent(new Event("change", { bubbles: true }));
+
+
+        }
+      };
+
+      first.addEventListener("input", updateUsername);
+      last.addEventListener("input", updateUsername);
+
+      updateUsername();
+
+
+          // 🔥 force persistence
+          setTimeout(() => {
+            username.value = generated;
+            username.dispatchEvent(new Event("input", { bubbles: true }));
+            username.dispatchEvent(new Event("change", { bubbles: true }));
+          }, 0);
+
+      return true;
+    };
+
+    // 🔥 Observe DOM until fields exist
+    const observer = new MutationObserver(() => {
+      if (setup()) {
+        observer.disconnect();
+      }
+    });
+
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true
+    });
+
+    return () => observer.disconnect();
+  }, []);
+
 
   return (
     <Template
