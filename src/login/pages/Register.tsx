@@ -90,6 +90,12 @@ export default function Register(props: RegisterProps) {
           username.dispatchEvent(new Event("input", { bubbles: true }));
           username.dispatchEvent(new Event("change", { bubbles: true }));
 
+          // 🔥 force persistence
+          setTimeout(() => {
+            username.value = generated;
+            username.dispatchEvent(new Event("input", { bubbles: true }));
+            username.dispatchEvent(new Event("change", { bubbles: true }));
+          }, 0);
 
         }
       };
@@ -98,14 +104,6 @@ export default function Register(props: RegisterProps) {
       last.addEventListener("input", updateUsername);
 
       updateUsername();
-
-
-          // 🔥 force persistence
-          setTimeout(() => {
-            username.value = generated;
-            username.dispatchEvent(new Event("input", { bubbles: true }));
-            username.dispatchEvent(new Event("change", { bubbles: true }));
-          }, 0);
 
       return true;
     };
